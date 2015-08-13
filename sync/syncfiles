@@ -4,16 +4,16 @@ function checkunison() {
   
   case $? in
       0)
-        notify-send -u low "$1: Successful sync."
+        notify-send -u low "$1: successful sync."
           ;; 
       1)
-        zenity --question --text "$1: All file transfers were successful. Some files were skipped. Show the log?"
+        zenity --question --text "$1: All file transfers were successful; some files were skipped.Show the log?"
         if [ "$?" -ne 1 ]; then
           cat $2 | zenity --text-info --width 800 --height 1000 ;
         fi
           ;; 
       2)
-        zenity --question --text "$1: Non-fatal failures during file transfer. Show the log?"
+        zenity --question --text "$1: Non-fatal failures during file transfer.Show the log?"
         if [ "$?" -ne 1 ]; then
           cat $2 | zenity --text-info --width 800 --height 1000 ;
         fi
@@ -35,6 +35,13 @@ function checkunison() {
   esac
 }
 
+function syncpic() {
+  echo "starting syncronisation of pictures"
+  unison gausussyncpic >> $1 2>> $1
+  checkunison "pic" $1
+  echo "finished"
+}
+
 function syncdev() {
   echo "starting synchronisation of developing"
   unison gausussyncdev >> $1 2>> $1
@@ -49,9 +56,26 @@ function syncdoc() {
   echo "finished"
 }
 
+function syncmusic() {
+  echo "starting synchronisation of music"
+  unison gausussyncmusic >> $1 2>> $1
+  checkunison "music" $1
+  echo "finished"
+}
+
+function syncstudy() {
+  echo "starting synchronisation of study"
+  unison gausussyncstudy >> $1 2>> $1
+  checkunison "study" $1
+  echo "finished"
+}
+
 function syncall() {
   syncdev $1
   syncdoc $1
+  syncpic $1
+  syncmusic $1
+  syncstudy $1
   exit 0
 }
 
@@ -62,7 +86,10 @@ date > $LOG
 response=$(zenity --height=250 --list --text "Synchonization Selection:" --checklist --column=Boxes --column=Selections \
    FALSE all \
    TRUE  dev \
-   FALSE doc  --separator=':')
+   FALSE doc \
+   FALSE pic \
+   FALSE music \
+   FALSE study --separator=':')
 
 if [ -z "$response" ] ; then
    echo "No selection"
@@ -74,5 +101,8 @@ IFS=":" ; for word in $response ; do
       all) syncall $LOG ;;
       dev) syncdev $LOG ;;
       doc) syncdoc $LOG ;;
+      pic) syncpic $LOG ;;
+      study) syncstudy $LOG ;;
+      music) syncmusic $LOG ;;
    esac
 done
